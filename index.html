@@ -120,10 +120,11 @@ select:focus,textarea:focus{outline:2px solid var(--turq);outline-offset:-2px}
 .prog{flex:1 1 auto}
 .prog .track{height:5px;background:rgba(225,244,242,.16);position:relative}
 .prog .fill{position:absolute;left:0;top:0;bottom:0;background:var(--turqc);width:0}
-.prog .txt{font-size:11.5px;color:rgba(225,244,242,.82);margin-top:5px;letter-spacing:.03em}
+.item.falta,.fld.falta{box-shadow:inset 3px 0 0 var(--turq);background:rgba(0,208,202,.07);padding-left:12px;transition:background .3s}
 .btn{font-family:inherit;font-weight:700;font-size:14.5px;padding:13px 18px;cursor:pointer;border:1px solid var(--turq);background:var(--turq);color:var(--verde)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:transparent;color:var(--turqc)}
+section .btn.ghost{color:var(--verde)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 
 .msg{margin-top:14px;padding:14px;font-size:14px;border:1px solid var(--linha);background:var(--claro);display:none}
@@ -160,14 +161,7 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
     <h2>Como esta ficha funciona</h2>
     <div class="rule"></div>
     <p class="sub">Cada item é avaliado <b>duas vezes</b>: como a pessoa estava no <b>primeiro contato</b> (terapia individual e encontro 1, de 15 a 24 de setembro) e como estava no <b>último encontro</b> (1º de outubro). A diferença entre as duas notas é o que vira dado no relatório.</p>
-    <details>
-      <summary>Por que avaliar início e final agora, e não na época</summary>
-      <div class="body">
-        <p>O programa não teve linha de base formal. Avaliar os dois momentos agora, com o percurso inteiro na memória, é uma <b>avaliação retrospectiva pareada</b>: o mesmo avaliador usa a mesma régua para os dois pontos, o que elimina a distorção de quem muda de critério ao longo do tempo.</p>
-        <p>Dois terapeutas avaliam cada participante de forma independente, sem combinar notas. A distância entre as duas avaliações entra no relatório como medida de consistência. Por isso, <b>não converse sobre as notas com o outro avaliador antes de enviar</b>.</p>
-        <p>Se você não observou um item nessa pessoa, marque <b>NO</b>. Nota chutada contamina o índice; item em branco não contamina nada.</p>
-      </div>
-    </details>
+    <p class="sub">Se você não observou um item nessa pessoa, marque <b>NO</b>. Nota chutada contamina o índice; item em branco não contamina nada.</p>
     <details>
       <summary>A régua de 1 a 5</summary>
       <div class="body">
@@ -269,7 +263,7 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
     <p class="sub">As respostas vão para a Silvia. Enquanto você não enviar, elas ficam salvas neste aparelho, então dá para parar e voltar depois.</p>
     <div class="btns">
       <button class="btn" id="enviar" type="button">Enviar respostas</button>
-      <button class="btn ghost" id="baixar" type="button">Baixar arquivo</button>
+      <button class="btn ghost hide" id="outra" type="button">Preencher outra ficha</button>
       <button class="btn ghost" id="limpar" type="button">Limpar esta ficha</button>
     </div>
     <div class="msg" id="msg"></div>
@@ -287,7 +281,6 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
   <div class="wrap">
     <div class="prog">
       <div class="track"><div class="fill" id="pf"></div></div>
-      <div class="txt" id="pt">0 de 0 respostas</div>
     </div>
     <button class="btn" id="enviarFixo" type="button">Enviar</button>
   </div>
@@ -443,7 +436,10 @@ function montarItens(){
     });
   });
   document.querySelectorAll("[data-aberta]").forEach(function(ta){
-    ta.addEventListener("input",function(){ R["t_"+ta.getAttribute("data-aberta")] = ta.value; salvar(); atualizarProgresso(); });
+    ta.addEventListener("input",function(){
+      R["t_"+ta.getAttribute("data-aberta")] = ta.value; salvar(); atualizarProgresso();
+      var f=ta.closest(".fld"); if(f && ta.value.trim().length>2) f.classList.remove("falta");
+    });
   });
   pintar(); calcular();
 }
@@ -458,6 +454,17 @@ function pintar(){
   document.querySelectorAll("[data-aberta]").forEach(function(ta){
     var v = R["t_"+ta.getAttribute("data-aberta")];
     if(typeof v==="string" && ta.value!==v) ta.value=v;
+  });
+  /* tira o destaque de onde já houve resposta */
+  document.querySelectorAll(".item.falta").forEach(function(it){
+    var ok = Array.prototype.every.call(it.querySelectorAll(".scale"), function(sc){
+      return !!R[sc.getAttribute("data-item")+"_"+sc.getAttribute("data-fase")];
+    });
+    if(ok) it.classList.remove("falta");
+  });
+  document.querySelectorAll(".fld.falta").forEach(function(f){
+    var ta=f.querySelector("[data-aberta]");
+    if(ta && (ta.value||"").trim().length>2) f.classList.remove("falta");
   });
   atualizarProgresso();
 }
@@ -517,11 +524,32 @@ function atualizarProgresso(){
   var t=totalCampos(), p=preenchidos();
   var pc = t? Math.round(p/t*100):0;
   $("pf").style.width = pc+"%";
-  $("pt").textContent = p+" de "+t+" respostas · "+pc+"%";
-  var pronto = p>=t;
-  $("enviar").disabled = !pronto;
-  $("enviarFixo").disabled = !pronto;
-  $("enviarFixo").textContent = pronto? "Enviar" : (t-p)+" faltam";
+  $("enviar").disabled = false;
+  $("enviarFixo").disabled = false;
+  $("enviarFixo").textContent = "Enviar";
+}
+
+/* leva, sem contar nada, até o primeiro ponto sem resposta */
+function irParaPendente(){
+  var alvo=null, foco=null;
+  var escalas=document.querySelectorAll(".scale");
+  for(var i=0;i<escalas.length && !alvo;i++){
+    var sc=escalas[i];
+    if(!R[sc.getAttribute("data-item")+"_"+sc.getAttribute("data-fase")]) alvo=sc.closest(".item");
+  }
+  if(!alvo){
+    var tas=document.querySelectorAll("[data-aberta]");
+    for(var j=0;j<tas.length && !alvo;j++){
+      var id=tas[j].getAttribute("data-aberta");
+      var req=abertasAtuais().some(function(a){return a.id===id && a.req;});
+      if(req && (R["t_"+id]||"").trim().length<=2){ alvo=tas[j].closest(".fld"); foco=tas[j]; }
+    }
+  }
+  if(!alvo) return false;
+  alvo.classList.add("falta");
+  alvo.scrollIntoView({behavior:"smooth",block:"center"});
+  if(foco) setTimeout(function(){ try{foco.focus({preventScroll:true});}catch(e){} },400);
+  return true;
 }
 
 /* ---------- fluxo ---------- */
@@ -562,55 +590,52 @@ function payload(){
   return p;
 }
 
-function textoResumo(p){
-  var l=[];
-  l.push("AVALIACAO COMUNICACIONAL CONX");
-  l.push("Terapeuta: "+p.terapeuta);
-  l.push("Ficha: "+p.tipo+" · "+p.participante);
-  l.push("Indice inicio: "+p.indiceInicio+" | final: "+p.indiceFinal);
-  l.push("");
-  Object.keys(p.respostas).forEach(function(k){ l.push(k+" = "+p.respostas[k]); });
-  return l.join("\n");
-}
-
-function baixar(){
-  var p=payload();
-  var nome = "AVAL_CONX_"+p.terapeuta.split(" ")[0]+"_"+p.participante+".json";
-  var blob = new Blob([JSON.stringify(p,null,2)],{type:"application/json"});
-  var a=document.createElement("a");
-  a.href=URL.createObjectURL(blob); a.download=nome; document.body.appendChild(a); a.click();
-  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},800);
-}
-
 function mostrar(tipo,txt){
   var m=$("msg"); m.className="msg "+tipo; m.innerHTML=txt;
   m.scrollIntoView({behavior:"smooth",block:"center"});
 }
 
+function concluido(p){
+  var nome = p.participante==="GRUPO" ? "de grupo" : "de "+p.participante;
+  mostrar("ok","<b>Recebido.</b> A ficha "+nome+" foi registrada. Obrigada!");
+  try{localStorage.removeItem(CHAVE);}catch(e){}
+  $("outra").classList.remove("hide");
+  $("enviar").disabled=true; $("enviarFixo").disabled=true;
+  $("enviarFixo").textContent="Enviada";
+}
+
+function falhou(){
+  mostrar("err","Não conseguimos enviar agora, provavelmente pela conexão. Suas respostas continuam salvas neste aparelho: tente de novo em alguns minutos.");
+  $("enviar").disabled=false; $("enviarFixo").disabled=false;
+}
+
 function enviar(){
+  if(preenchidos() < totalCampos()){ irParaPendente(); return; }
   var p = payload();
   if(!ENDPOINT){
-    baixar();
-    var corpo = encodeURIComponent(textoResumo(p));
-    var assunto = encodeURIComponent("Avaliação CONX · "+p.terapeuta+" · "+p.participante);
-    mostrar("ok","Arquivo baixado. Agora envie para a Silvia: <a href=\"mailto:"+EMAIL+"?subject="+assunto+"&body="+corpo+"\">abrir e-mail já preenchido</a>, ou anexe o arquivo baixado no WhatsApp.");
+    mostrar("err","O envio ainda não foi configurado. Suas respostas estão salvas neste aparelho; avise a Silvia.");
     return;
   }
   $("enviar").disabled=true; $("enviarFixo").disabled=true;
   mostrar("ok","Enviando...");
-  fetch(ENDPOINT,{method:"POST",body:JSON.stringify(p)})
-    .then(function(r){return r.text();})
-    .then(function(){
-      mostrar("ok","<b>Recebido.</b> A ficha de "+p.participante+" foi registrada. Obrigada!");
-      try{localStorage.removeItem(CHAVE);}catch(e){}
-    })
+  var corpo = JSON.stringify(p);
+  fetch(ENDPOINT,{method:"POST",body:corpo})
+    .then(function(r){return r.json();})
+    .then(function(j){ if(j && j.ok){ concluido(p); } else { falhou(); } })
     .catch(function(){
-      baixar();
-      var corpo = encodeURIComponent(textoResumo(p));
-      var assunto = encodeURIComponent("Avaliação CONX · "+p.terapeuta+" · "+p.participante);
-      mostrar("err","O envio automático não passou, provavelmente por rede. O arquivo foi baixado: <a href=\"mailto:"+EMAIL+"?subject="+assunto+"&body="+corpo+"\">envie por e-mail</a> ou mande o arquivo no WhatsApp.");
-      $("enviar").disabled=false; $("enviarFixo").disabled=false;
+      /* alguns navegadores bloqueiam a leitura da resposta; reenvia sem ler */
+      fetch(ENDPOINT,{method:"POST",mode:"no-cors",body:corpo})
+        .then(function(){ concluido(p); })
+        .catch(falhou);
     });
+}
+
+function outraFicha(){
+  $("participante").value=""; $("tipo").value="";
+  $("outra").classList.add("hide");
+  var m=$("msg"); m.className="msg"; m.innerHTML="";
+  atualizarChave();
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
 /* ---------- ligações ---------- */
@@ -618,7 +643,7 @@ $("ano").textContent = new Date().getFullYear();
 ["terapeuta","tipo","participante"].forEach(function(id){ $(id).addEventListener("change",atualizarChave); });
 $("enviar").addEventListener("click",enviar);
 $("enviarFixo").addEventListener("click",function(){ $("blocoEnvio").scrollIntoView({behavior:"smooth"}); enviar(); });
-$("baixar").addEventListener("click",baixar);
+$("outra").addEventListener("click",outraFicha);
 $("limpar").addEventListener("click",function(){
   if(!confirm("Isso apaga as respostas desta ficha neste aparelho. Continuar?"))return;
   try{localStorage.removeItem(CHAVE);}catch(e){}
