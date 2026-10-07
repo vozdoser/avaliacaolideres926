@@ -161,7 +161,7 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
     <h2>Como esta ficha funciona</h2>
     <div class="rule"></div>
     <p class="sub">Cada item é avaliado <b>duas vezes</b>: como a pessoa estava no <b>primeiro contato</b> (terapia individual e encontro 1, de 15 a 24 de setembro) e como estava no <b>último encontro</b> (1º de outubro). A diferença entre as duas notas é o que vira dado no relatório.</p>
-    <p class="sub">Se você não observou um item nessa pessoa, marque <b>NO</b>. Nota chutada contamina o índice; item em branco não contamina nada.</p>
+    <p class="sub"><b style="color:var(--verde)">Se você não observou um item nessa pessoa, marque NO.</b> Nota chutada contamina o índice; item em branco não contamina nada.</p>
     <details>
       <summary>A régua de 1 a 5</summary>
       <div class="body">
@@ -289,11 +289,10 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
 <script>
 /* ===========================================================
    CONFIGURAÇÃO
-   Cole aqui a URL do app da web do Google Apps Script.
-   Deixando em branco, a ficha funciona assim mesmo: o botão
-   Enviar passa a baixar o arquivo e abrir o e-mail.
+   Endereço do RECEPTOR · AVALIAÇÃO CONX (Google Apps Script),
+   que grava cada ficha na planilha BASE DE DADOS · AVALIAÇÃO CONX.
    =========================================================== */
-var ENDPOINT = "";
+var ENDPOINT = "https://script.google.com/macros/s/AKfycbytwwPPz8giFKUOwlNk46VEawuI5YkqZrwpN0BiIMPBg94iP5xOD1ymnFBg_SJu4NU/exec";
 var EMAIL = "silvia.vozdoser@gmail.com";
 
 /* ---------- dados do instrumento ---------- */
