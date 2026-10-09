@@ -160,7 +160,7 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
     <div class="kicker">Antes de começar</div>
     <h2>Como esta ficha funciona</h2>
     <div class="rule"></div>
-    <p class="sub">Cada item é avaliado <b>duas vezes</b>: como a pessoa estava no <b>primeiro contato</b> (terapia individual e encontro 1, de 15 a 24 de setembro) e como estava no <b>último encontro</b> (1º de outubro). A diferença entre as duas notas é o que vira dado no relatório.</p>
+    <p class="sub">Cada item é avaliado <b>duas vezes</b>: como a pessoa estava <b>na primeira vez que você a viu no programa</b> (na terapia individual ou no primeiro encontro em grupo que você conduziu) e como estava <b>no último encontro em que você esteve com ela</b>. A diferença entre as duas notas é o que vira dado no relatório.</p>
     <p class="sub"><b style="color:var(--verde)">Se você não observou um item nessa pessoa, marque NO.</b> Nota chutada contamina o índice; item em branco não contamina nada.</p>
     <details>
       <summary>A régua de 1 a 5</summary>
@@ -194,7 +194,7 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
     </label>
     <label class="fld">
       <span class="q">Tipo de ficha</span>
-      <span class="h">Preencha uma ficha para cada participante que você acompanhou, e uma única ficha de grupo.</span>
+      <span class="h">Cada terapeuta preenche uma ficha para cada um dos quatro participantes e uma única ficha de grupo: cinco fichas no total.</span>
       <select id="tipo">
         <option value="">Selecione</option>
         <option value="ind">Avaliação de um participante</option>
@@ -203,7 +203,7 @@ footer .bn{font-family:'Fraunces',serif;font-weight:600;letter-spacing:.06em;col
     </label>
     <label class="fld hide" id="wrapPart">
       <span class="q">Participante avaliado</span>
-      <span class="h" id="hintPart">Priorize quem você atendeu na terapia individual, porque você viu o ponto de partida de perto.</span>
+      <span class="h" id="hintPart">Uma ficha para cada um: Gabriel, Guilherme, Luisa e Rodrigo.</span>
       <select id="participante">
         <option value="">Selecione</option>
         <option>Gabriel</option>
@@ -353,12 +353,6 @@ var EXTRAS_GRP = [
  {id:"x_suc", t:"Prontidão comunicacional do grupo para o processo sucessório", h:"Avalie apenas o momento atual.", unico:true}
 ];
 
-var ATRIBUICAO = {
- "Gabriel Hatt":"Você conduziu as sessões individuais de Guilherme, Rodrigo e Gabriel, e os encontros 1 e 3.",
- "Luana Curti":"Você conduziu as sessões individuais de Guilherme e Luisa, e os encontros 1 e 3.",
- "Silvia Maciel":"Você conduziu as sessões individuais de Rodrigo e Gabriel, e os encontros 2 e 4.",
- "Luiza Lio":"Você conduziu a sessão individual de Luisa, e os encontros 2 e 4."
-};
 
 /* ---------- estado ---------- */
 var R = {};          /* respostas */
@@ -559,7 +553,6 @@ function atualizarChave(){
   var t=$("terapeuta").value, tp=$("tipo").value, p=$("participante").value;
   MODO = tp;
   $("wrapPart").classList.toggle("hide", tp!=="ind");
-  if(t && ATRIBUICAO[t]) $("hintPart").textContent = ATRIBUICAO[t]+" Priorize quem você atendeu individualmente, porque você viu o ponto de partida de perto.";
 
   var ok = t && tp && (tp==="grp" || p);
   ["blocoItens","blocoAbertas","painel","blocoEnvio","rodape","legenda"].forEach(function(id){
@@ -571,7 +564,7 @@ function atualizarChave(){
   $("tituloItens").textContent = tp==="grp" ? "Eixos do grupo" : "Eixos avaliados em "+p;
   $("subItens").textContent = tp==="grp"
     ? "Avalie o grupo como unidade, do primeiro encontro ao último."
-    : "Os eixos vêm dos pontos que a proposta de 09 de setembro prometeu trabalhar. Para cada um, marque o nível no início (15 a 24 de setembro) e no final (1º de outubro).";
+    : "Os eixos vêm dos pontos que a proposta de 09 de setembro prometeu trabalhar. Para cada um, marque o nível no início (a primeira vez que você viu a pessoa no programa) e no final (o último encontro em que você esteve com ela).";
   carregar();
   montarItens();
 }
